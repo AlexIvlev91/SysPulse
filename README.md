@@ -2,10 +2,21 @@
 
 A small Windows tray app that shows CPU/GPU temperature and load, switches CPU
 turbo boost on and off, and points out apps worth closing to free memory or CPU.
-It also draws a white, click-through readout in the top-right corner of the screen,
-similar to an in-game FPS counter.
+It also draws a click-through readout in a corner of the screen, similar to an
+in-game FPS counter.
 
 ![main window](docs/main.png)
+
+## Download
+
+Get `SysPulse.exe` from the [latest release](https://github.com/AlexIvlev91/SysPulse/releases/latest)
+and double-click it. There's nothing to install and .NET doesn't need to be on the PC.
+It runs on 64-bit Windows 10 and 11. To keep it, put it somewhere permanent (for example
+`%LOCALAPPDATA%\Programs\SysPulse`) and turn on **Start with Windows** in the app.
+
+The exe isn't code-signed yet, so the first time Windows may say *"Windows protected
+your PC"*. Click **More info → Run anyway**. The release build is made by GitHub
+Actions from the tagged source ([release.yml](.github/workflows/release.yml)).
 
 ## Features
 
@@ -14,8 +25,8 @@ similar to an in-game FPS counter.
   window, or the tray menu. Hold **Ctrl** over it to show a close button, or drag it
   somewhere else.
 - **Overlay settings** (gear next to the Overlay switch, or the tray menu): stacked or
-  one-line layout, small / medium / large, opacity 20–100%, optional dark backplate,
-  and position. Pick any corner or edge, then fine-tune with the arrow buttons (hold to
+  one-line layout, small / medium / large, text color (presets or any custom color),
+  opacity 20–100%, optional dark backplate, and position. Pick any corner or edge, then fine-tune with the arrow buttons (hold to
   keep moving) or the arrow keys (1 px, Shift for 10 px). Changes apply live.
 - **CPU**: load (Task Manager's "% Processor Utility"), live clock speed against
   the base clock, and package temperature and power (see below).
@@ -52,18 +63,32 @@ a UAC prompt. Otherwise startup uses the normal `HKCU\...\Run` entry. Click
 
 ## Build
 
-Requires the .NET 8 SDK on Windows.
+Requires the .NET 8 SDK (or newer) on Windows.
 
 ```bash
-dotnet build -c Release
+dotnet build src/SysPulse -c Release
+```
+
+To make the app, publish one portable exe with .NET bundled inside:
+
+```bash
+dotnet publish src/SysPulse -p:PublishProfile=SingleExe
+```
+
+This produces `publish\SysPulse.exe` (about 65 MB) with .NET inside. The first launch
+of a new copy is slower while Windows scans it. If Start with Windows was turned on
+from another copy, the startup entry moves to whichever copy you launch.
+
+To publish a release, push a version tag. GitHub Actions builds the exe and attaches
+it, with the licenses, to a new GitHub release:
+
+```bash
+git tag v1.0.1
 ```
 
 ```bash
-dotnet publish src/SysPulse -c Release -r win-x64 --self-contained false -o publish
+git push origin v1.0.1
 ```
-
-Run `publish\SysPulse.exe`. If Start with Windows was turned on from another copy,
-the startup entry moves to whichever copy you launch.
 
 For UI checks without touching the desktop, `SysPulse.exe --snapshot <folder>` samples
 the real sensors for a few seconds off-screen and saves `main.png`, `overlay.png`,
@@ -72,3 +97,13 @@ the real sensors for a few seconds off-screen and saves `main.png`, `overlay.png
 ## Files
 
 Settings live in `%LOCALAPPDATA%\SysPulse\settings.json`.
+
+## Contributing
+
+Issues and pull requests are welcome. Please keep changes in the style of the
+surrounding code, and check the UI with `--snapshot` before sending a pull request.
+
+## License
+
+SysPulse is released under the [MIT License](LICENSE). It bundles open-source
+libraries under their own licenses; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

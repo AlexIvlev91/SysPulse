@@ -1,0 +1,41 @@
+# Push a tag like v1.0.0 to build SysPulse.exe and publish it as a GitHub release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish single exe
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          dotnet publish src/SysPulse -p:PublishProfile=SingleExe -p:Version=$version
+
+      - name: Package with licenses
+        shell: pwsh
+        run: |
+          $name = 'SysPulse-${{ github.ref_name }}-win-x64'
+          New-Item -ItemType Directory $name | Out-Null
+          Copy-Item publish/SysPulse.exe, LICENSE, THIRD-PARTY-NOTICES.md $name
+          Copy-Item licenses $name -Recurse
+          Compress-Archive $name "$name.zip"
+
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          gh release create $tag publish/SysPulse.exe "SysPulse-$tag-win-x64.zip" --title "SysPulse $tag" --generate-notes
