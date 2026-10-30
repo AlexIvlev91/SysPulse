@@ -20,13 +20,24 @@ internal sealed record OverlayOptions(
     OverlayAnchor Anchor,
     int OffsetX,
     int OffsetY,
-    string? Screen)
+    string? Screen,
+    Color TextColor)
 {
     public const int MinOpacity = 20;
 
     public static OverlayOptions Default => new(
         OverlayLayout.Stacked, OverlaySize.Medium, 100, false, OverlayAnchor.TopRight,
-        DefaultOffsetX(OverlayAnchor.TopRight), DefaultOffsetY(OverlayAnchor.TopRight), null);
+        DefaultOffsetX(OverlayAnchor.TopRight), DefaultOffsetY(OverlayAnchor.TopRight), null, Color.White);
+
+    public static string ToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+
+    private static Color? FromHex(string? hex)
+    {
+        if (hex is not { Length: 7 } || hex[0] != '#' ||
+            !int.TryParse(hex.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out int rgb))
+            return null;
+        return Color.FromArgb(255, (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    }
 
     public static int DefaultOffsetX(OverlayAnchor a) => (int)a % 3 == 1 ? 0 : Theme.S(10);
 
@@ -46,7 +57,8 @@ internal sealed record OverlayOptions(
             // overlay.right / overlay.top: positions saved by the first version (always top-right).
             AppSettings.GetInt("overlay.dx") ?? AppSettings.GetInt("overlay.right") ?? DefaultOffsetX(anchor),
             AppSettings.GetInt("overlay.dy") ?? AppSettings.GetInt("overlay.top") ?? DefaultOffsetY(anchor),
-            AppSettings.Get("overlay.screen"));
+            AppSettings.Get("overlay.screen"),
+            FromHex(AppSettings.Get("overlay.color")) ?? d.TextColor);
     }
 
     public void Save() => AppSettings.SetMany(
@@ -58,6 +70,7 @@ internal sealed record OverlayOptions(
         ("overlay.dx", OffsetX.ToString(System.Globalization.CultureInfo.InvariantCulture)),
         ("overlay.dy", OffsetY.ToString(System.Globalization.CultureInfo.InvariantCulture)),
         ("overlay.screen", Screen),
+        ("overlay.color", ToHex(TextColor)),
         ("overlay.right", null),
         ("overlay.top", null));
 }

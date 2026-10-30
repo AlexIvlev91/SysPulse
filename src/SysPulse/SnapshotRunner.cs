@@ -43,6 +43,7 @@ internal static class SnapshotRunner
                 SaveOverlay(app, Path.Combine(dir, "overlay-small-dark-60.png"),
                     o with { Size = UI.OverlaySize.Small, Background = true, Opacity = 60 }, interactive: false);
                 SaveOverlay(app, Path.Combine(dir, "overlay-large.png"), o with { Size = UI.OverlaySize.Large }, interactive: false);
+                SaveOverlay(app, Path.Combine(dir, "overlay-yellow.png"), o with { TextColor = UI.Theme.Hex("#FFE15A") }, interactive: false);
                 if (app.Last is { } last)
                     File.WriteAllText(Path.Combine(dir, "snapshot.txt"), last.Snapshot.ToString());
             }

@@ -215,3 +215,112 @@ internal sealed class AnchorPicker : Control
         }
     }
 }
+
+/// <summary>A row of color circles; a custom color that isn't a preset shows as an extra circle at the end.</summary>
+internal sealed class ColorSwatches : Control
+{
+    private readonly (string Name, Color Color)[] _presets;
+    private Color _selected = Color.White;
+    private int _hover = -1;
+    private readonly ToolTip _tip = new();
+    private int _tipIndex = -1;
+
+    public ColorSwatches(params (string Name, Color Color)[] presets)
+    {
+        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer |
+                 ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
+        _presets = presets;
+        BackColor = Color.Transparent;
+        Cursor = Cursors.Hand;
+        Size = new Size(Theme.S(30) * (presets.Length + 1), Theme.S(30));
+    }
+
+    /// <summary>Raised when the user clicks a color (not when Selected is set in code).</summary>
+    public event EventHandler? SelectionCommitted;
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Color Selected
+    {
+        get => _selected;
+        set { _selected = value; Invalidate(); }
+    }
+
+    private bool IsPreset(Color c) => _presets.Any(p => p.Color.ToArgb() == c.ToArgb());
+
+    private int Count => _presets.Length + (IsPreset(_selected) ? 0 : 1);
+
+    private Color ColorAt(int i) => i < _presets.Length ? _presets[i].Color : _selected;
+
+    private Rectangle Swatch(int i)
+    {
+        int cell = Theme.S(30), d = Theme.S(22);
+        return new Rectangle(i * cell + (cell - d) / 2, (Height - d) / 2, d, d);
+    }
+
+    private int HitTest(Point p)
+    {
+        for (int i = 0; i < Count; i++)
+            if (Rectangle.Inflate(Swatch(i), Theme.S(3), Theme.S(3)).Contains(p))
+                return i;
+        return -1;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        int h = HitTest(e.Location);
+        if (h != _hover) { _hover = h; Invalidate(); }
+        if (h != _tipIndex)
+        {
+            _tipIndex = h;
+            _tip.SetToolTip(this, h < 0 ? "" : h < _presets.Length ? _presets[h].Name : $"Custom {OverlayOptions.ToHex(_selected)}");
+        }
+    }
+
+    protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hover = -1; Invalidate(); }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        int h = HitTest(e.Location);
+        if (h >= 0)
+        {
+            _selected = ColorAt(h);
+            Invalidate();
+            SelectionCommitted?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        var g = e.Graphics;
+        g.Clear(Ui.EffectiveBack(this));
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        for (int i = 0; i < Count; i++)
+        {
+            var r = Swatch(i);
+            var c = ColorAt(i);
+            if (c.ToArgb() == _selected.ToArgb())
+            {
+                using var ring = new Pen(Theme.Text, Theme.S(2f));
+                g.DrawEllipse(ring, RectangleF.Inflate(r, Theme.S(3.5f), Theme.S(3.5f)));
+            }
+            else if (i == _hover)
+            {
+                using var ring = new Pen(Theme.TextSubtle, Theme.S(1.5f));
+                g.DrawEllipse(ring, RectangleF.Inflate(r, Theme.S(3f), Theme.S(3f)));
+            }
+            using var fill = new SolidBrush(c);
+            g.FillEllipse(fill, r);
+            using var edge = new Pen(Color.FromArgb(70, 0, 0, 0));
+            g.DrawEllipse(edge, r);
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            _tip.Dispose();
+        base.Dispose(disposing);
+    }
+}

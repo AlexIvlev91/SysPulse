@@ -264,18 +264,19 @@ internal sealed class OverlayForm : Form
                 gy += lineH;
         }
 
-        // White text with a dark outline: readable on any background (a backplate makes it lighter).
+        // Light text (white by default) with a dark outline: readable on any background (a backplate makes it lighter).
         int outlineAlpha = interactive ? 0 : options.Background ? 110 : 190;
         using var outline = new Pen(Color.FromArgb(outlineAlpha, 0, 0, 0), Math.Max(1.5f, em * 0.17f)) { LineJoin = LineJoin.Round };
-        using var dim = new SolidBrush(Color.FromArgb(225, 255, 255, 255));
-        using var white = new SolidBrush(Color.White);
+        var textColor = options.TextColor;
+        using var dim = new SolidBrush(Color.FromArgb(225, textColor));
+        using var fill = new SolidBrush(textColor);
         if (outlineAlpha > 0)
         {
             g.DrawPath(outline, labels);
             g.DrawPath(outline, values);
         }
         g.FillPath(dim, labels);
-        g.FillPath(white, values);
+        g.FillPath(fill, values);
         return bmp;
     }
 

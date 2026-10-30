@@ -3,7 +3,7 @@ using SysPulse.UI.Controls;
 
 namespace SysPulse.UI;
 
-/// <summary>Overlay layout, size, opacity, backplate and position. Every change applies live.</summary>
+/// <summary>Overlay layout, size, text color, opacity, backplate and position. Every change applies live.</summary>
 internal sealed class OverlaySettingsForm : Form
 {
     private const int NudgeStep = 4;
@@ -14,6 +14,13 @@ internal sealed class OverlaySettingsForm : Form
     private readonly Slider _opacity = new(OverlayOptions.MinOpacity, 100, 5);
     private readonly Label _opacityValue = new() { AutoSize = false, Font = Theme.BodyBold, ForeColor = Theme.Text, TextAlign = ContentAlignment.MiddleRight };
     private readonly Segmented _background = new("None", "Dark");
+    private readonly ColorSwatches _color = new(
+        ("White", Color.White),
+        ("Yellow", Theme.Hex("#FFE15A")),
+        ("Green", Theme.Hex("#7CFC6B")),
+        ("Cyan", Theme.Hex("#5CE1FF")),
+        ("Orange", Theme.Hex("#FFA64D")),
+        ("Pink", Theme.Hex("#FF7EC8")));
     private readonly AnchorPicker _anchor = new();
     private readonly Label _offsets = new() { AutoSize = true, Font = Theme.Small, ForeColor = Theme.TextSubtle, Margin = Theme.S(0, 6, 0, 0) };
 
@@ -32,13 +39,14 @@ internal sealed class OverlaySettingsForm : Form
         StartPosition = FormStartPosition.Manual;
         AutoScaleMode = AutoScaleMode.None;
         Padding = Theme.S(20, 16, 20, 16);
-        ClientSize = Theme.S(460, 452);
+        ClientSize = Theme.S(460, 498);
 
         var grid = new TableLayoutPanel { Dock = DockStyle.Top, ColumnCount = 2, AutoSize = true, BackColor = Theme.Surface };
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, Theme.S(110)));
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         AddRow(grid, "Layout", Fit(_layout, 220));
         AddRow(grid, "Size", Fit(_size, 260));
+        AddRow(grid, "Color", ColorRow());
         AddRow(grid, "Opacity", OpacityRow());
         AddRow(grid, "Background", Fit(_background, 160));
         AddRow(grid, "Position", PositionRow());
@@ -72,6 +80,7 @@ internal sealed class OverlaySettingsForm : Form
             Apply(o => o with { Opacity = _opacity.Value });
         };
         _background.SelectionCommitted += (_, _) => Apply(o => o with { Background = _background.SelectedIndex == 1 });
+        _color.SelectionCommitted += (_, _) => Apply(o => o with { TextColor = _color.Selected });
         _anchor.SelectionCommitted += (_, _) =>
         {
             _overlay.SetAnchor(_anchor.Selected);
@@ -95,6 +104,7 @@ internal sealed class OverlaySettingsForm : Form
         _opacity.Value = o.Opacity;
         _opacityValue.Text = $"{o.Opacity}%";
         _background.SelectedIndex = o.Background ? 1 : 0;
+        _color.Selected = o.TextColor;
         _anchor.Selected = o.Anchor;
         ShowOffsets();
     }
@@ -131,6 +141,27 @@ internal sealed class OverlaySettingsForm : Form
     {
         c.Size = new Size(Theme.S(width), Theme.S(30));
         return c;
+    }
+
+    private Control ColorRow()
+    {
+        var row = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false, BackColor = Theme.Surface };
+        _color.Margin = Theme.S(-4, 0, 6, 0);
+        var custom = new ModernButton("Custom…", ButtonKind.Secondary) { BaseHeight = 30, Margin = Padding.Empty };
+        custom.Click += (_, _) => PickCustomColor();
+        row.Controls.Add(_color);
+        row.Controls.Add(custom);
+        return row;
+    }
+
+    private void PickCustomColor()
+    {
+        using var dialog = new ColorDialog { Color = _overlay.Options.TextColor, FullOpen = true, AnyColor = true };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+            return;
+        var c = Color.FromArgb(255, dialog.Color);
+        _color.Selected = c;
+        Apply(o => o with { TextColor = c });
     }
 
     private Control OpacityRow()
