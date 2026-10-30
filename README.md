@@ -1,11 +1,24 @@
 # SysPulse
 
-A small Windows tray app that shows CPU/GPU temperature and load, switches CPU
-turbo boost on and off, and points out apps worth closing to free memory or CPU.
-It also draws a click-through readout in a corner of the screen, similar to an
-in-game FPS counter.
+**An FPS-counter style overlay for your CPU and GPU, and a one-click turbo boost switch, for Windows.**
+One portable exe: no install, no account, about 0.1% CPU.
 
-![main window](docs/main.png)
+[![Latest release](https://img.shields.io/github/v/release/AlexIvlev91/SysPulse)](https://github.com/AlexIvlev91/SysPulse/releases/latest)
+[![Build](https://github.com/AlexIvlev91/SysPulse/actions/workflows/build.yml/badge.svg)](https://github.com/AlexIvlev91/SysPulse/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/github/license/AlexIvlev91/SysPulse)](LICENSE)
+![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
+
+![The SysPulse overlay in the top-right corner, with CPU load rising and falling](docs/overlay.gif)
+
+SysPulse sits in the tray and shows CPU/GPU temperature and load, switches CPU turbo
+boost on and off, and points out apps worth closing to free memory or CPU. The overlay
+stays in a corner of the screen, always on top and click-through, like an in-game FPS
+counter.
+
+![The SysPulse main window](docs/main.png)
+
+**[Download SysPulse.exe](https://github.com/AlexIvlev91/SysPulse/releases/latest/download/SysPulse.exe)**.
+If SysPulse is useful to you, a ⭐ on GitHub helps other people find it.
 
 ## Download
 
