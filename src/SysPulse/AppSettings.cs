@@ -48,14 +48,20 @@ internal static class AppSettings
 
     public static void Set(string key, int? value) => Set(key, value?.ToString(CultureInfo.InvariantCulture));
 
-    public static void Set(string key, string? value)
+    public static void Set(string key, string? value) => SetMany((key, value));
+
+    /// <summary>Sets several values with a single write of the file. A null value removes the key.</summary>
+    public static void SetMany(params (string Key, string? Value)[] items)
     {
         lock (Gate)
         {
-            if (value is null)
-                Values.Remove(key);
-            else
-                Values[key] = value;
+            foreach (var (key, value) in items)
+            {
+                if (value is null)
+                    Values.Remove(key);
+                else
+                    Values[key] = value;
+            }
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);

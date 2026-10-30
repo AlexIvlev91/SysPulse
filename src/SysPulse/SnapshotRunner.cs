@@ -28,8 +28,21 @@ internal static class SnapshotRunner
                     main.DrawToBitmap(bmp, new Rectangle(Point.Empty, main.Size));
                     bmp.Save(Path.Combine(dir, "main.png"), ImageFormat.Png);
                 }
-                SaveOverlay(app, Path.Combine(dir, "overlay.png"), interactive: false);
-                SaveOverlay(app, Path.Combine(dir, "overlay-ctrl.png"), interactive: true);
+                using (var settings = new UI.OverlaySettingsForm(app.Overlay) { Location = new Point(-20000, -20000) })
+                {
+                    settings.Show();
+                    using var bmp = new Bitmap(settings.Width, settings.Height);
+                    settings.DrawToBitmap(bmp, new Rectangle(Point.Empty, settings.Size));
+                    bmp.Save(Path.Combine(dir, "overlay-settings.png"), ImageFormat.Png);
+                    settings.Close();
+                }
+                var o = app.Overlay.Options;
+                SaveOverlay(app, Path.Combine(dir, "overlay.png"), o, interactive: false);
+                SaveOverlay(app, Path.Combine(dir, "overlay-ctrl.png"), o, interactive: true);
+                SaveOverlay(app, Path.Combine(dir, "overlay-oneline.png"), o with { Layout = UI.OverlayLayout.OneLine }, interactive: false);
+                SaveOverlay(app, Path.Combine(dir, "overlay-small-dark-60.png"),
+                    o with { Size = UI.OverlaySize.Small, Background = true, Opacity = 60 }, interactive: false);
+                SaveOverlay(app, Path.Combine(dir, "overlay-large.png"), o with { Size = UI.OverlaySize.Large }, interactive: false);
                 if (app.Last is { } last)
                     File.WriteAllText(Path.Combine(dir, "snapshot.txt"), last.Snapshot.ToString());
             }
@@ -46,9 +59,9 @@ internal static class SnapshotRunner
     }
 
     /// <summary>The overlay over a light and a dark backdrop, to check readability on both.</summary>
-    private static void SaveOverlay(SysPulseApp app, string file, bool interactive)
+    private static void SaveOverlay(SysPulseApp app, string file, UI.OverlayOptions options, bool interactive)
     {
-        using var overlay = app.Overlay.RenderBitmap(interactive, closeHover: false, out _);
+        using var overlay = app.Overlay.RenderBitmap(options, interactive, closeHover: false, out _);
         int pad = 24;
         using var canvas = new Bitmap(overlay.Width * 2 + pad * 3, overlay.Height + pad * 2);
         using var g = Graphics.FromImage(canvas);
@@ -57,8 +70,11 @@ internal static class SnapshotRunner
             g.FillRectangle(light, half);
         using (var dark = new LinearGradientBrush(half with { X = half.Width }, Color.FromArgb(30, 40, 60), Color.FromArgb(10, 10, 12), 0f))
             g.FillRectangle(dark, half with { X = half.Width });
-        g.DrawImage(overlay, pad, pad);
-        g.DrawImage(overlay, half.Width + pad / 2, pad);
+        // The window fades the whole bitmap by the opacity setting; do the same here.
+        using var fade = new ImageAttributes();
+        fade.SetColorMatrix(new ColorMatrix { Matrix33 = interactive ? 1f : options.Opacity / 100f });
+        foreach (int x in new[] { pad, half.Width + pad / 2 })
+            g.DrawImage(overlay, new Rectangle(x, pad, overlay.Width, overlay.Height), 0, 0, overlay.Width, overlay.Height, GraphicsUnit.Pixel, fade);
         canvas.Save(file, ImageFormat.Png);
     }
 }

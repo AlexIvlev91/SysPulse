@@ -229,8 +229,8 @@ internal static class Win32
         public byte AlphaFormat;
     }
 
-    /// <summary>Puts a 32-bit ARGB bitmap on a layered window with per-pixel alpha.</summary>
-    public static void UpdateLayered(IntPtr hwnd, Bitmap bitmap, Point location)
+    /// <summary>Puts a 32-bit ARGB bitmap on a layered window with per-pixel alpha, faded by <paramref name="opacity"/>.</summary>
+    public static void UpdateLayered(IntPtr hwnd, Bitmap bitmap, Point location, byte opacity = 255)
     {
         IntPtr screenDc = GetDC(IntPtr.Zero);
         IntPtr memDc = CreateCompatibleDC(screenDc);
@@ -242,7 +242,7 @@ internal static class Win32
             var size = new SIZE { Cx = bitmap.Width, Cy = bitmap.Height };
             var src = new POINT();
             var dst = new POINT { X = location.X, Y = location.Y };
-            var blend = new BLENDFUNCTION { BlendOp = 0 /* AC_SRC_OVER */, SourceConstantAlpha = 255, AlphaFormat = 1 /* AC_SRC_ALPHA */ };
+            var blend = new BLENDFUNCTION { BlendOp = 0 /* AC_SRC_OVER */, SourceConstantAlpha = opacity, AlphaFormat = 1 /* AC_SRC_ALPHA */ };
             UpdateLayeredWindow(hwnd, screenDc, ref dst, ref size, memDc, ref src, 0, ref blend, 2 /* ULW_ALPHA */);
         }
         finally

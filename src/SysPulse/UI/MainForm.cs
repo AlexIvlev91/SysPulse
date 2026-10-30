@@ -13,6 +13,7 @@ internal sealed class MainForm : Form
     private readonly Label _subtitle = new() { AutoSize = true, Font = Theme.Small, ForeColor = Theme.TextSubtle, Margin = Theme.S(2, 0, 0, 0) };
     private readonly ToggleSwitch _overlaySwitch = new("Overlay");
     private readonly ToggleSwitch _startupSwitch = new("Start with Windows");
+    private readonly ModernButton _overlaySettings = new("", ButtonKind.Ghost, Glyph.Settings) { Margin = Theme.S(2, 0, 0, 0) };
     private readonly ModernButton _adminButton = new("Run as administrator", ButtonKind.Ghost, Glyph.Shield);
     private readonly Label _adminChip = new() { AutoSize = true, Font = Theme.SmallBold, ForeColor = Theme.TextMuted, Text = "Administrator", Padding = Theme.S(0, 8, 0, 0) };
 
@@ -70,6 +71,8 @@ internal sealed class MainForm : Form
         _startupSwitch.Checked = StartupRegistration.IsEnabled;
         _startupSwitch.Toggling += (_, e) => e.Cancel = !SetStartup(!_startupSwitch.Checked);
         _adminButton.Click += (_, _) => _app.RestartElevated();
+        _overlaySettings.Click += (_, _) => _app.ShowOverlaySettings();
+        _overlaySettings.Tip("Overlay settings: layout, size, opacity, position");
         _overlaySwitch.Tip("White readout in the top-right corner (Ctrl+Shift+O). Hold Ctrl over it to move or close it.");
         _startupSwitch.Tip(Elevation.IsAdministrator
             ? "Starts SysPulse as administrator at sign-in (no UAC prompt), so CPU temperature works."
@@ -98,6 +101,7 @@ internal sealed class MainForm : Form
             Padding = Theme.S(0, 10, 0, 0),
         };
         right.Controls.Add(_startupSwitch);
+        right.Controls.Add(_overlaySettings);
         right.Controls.Add(_overlaySwitch);
         if (Elevation.IsAdministrator)
             right.Controls.Add(_adminChip);

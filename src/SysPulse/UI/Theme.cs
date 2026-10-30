@@ -157,4 +157,5 @@ internal static class Glyph
     public const string Thermometer = "";
     public const string Overlay = "";
     public const string Pulse = "";
+    public const string Settings = "";
 }

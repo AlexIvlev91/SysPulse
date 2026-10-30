@@ -17,6 +17,7 @@ internal sealed class SysPulseApp : ApplicationContext
     private readonly OverlayForm _overlay = new();
     private readonly HotkeyWindow _hotkey;
     private MainForm? _main;
+    private OverlaySettingsForm? _overlaySettings;
     private readonly bool _headless;
     private bool? _trayTurbo;
     private Icon? _trayIcon;
@@ -36,7 +37,7 @@ internal sealed class SysPulseApp : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_overlayItem);
         menu.Items.Add(_turboItem);
-        menu.Items.Add(new ToolStripMenuItem("Reset overlay position", null, (_, _) => _overlay.ResetPosition()));
+        menu.Items.Add(new ToolStripMenuItem("Overlay settings…", null, (_, _) => ShowOverlaySettings()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => ExitApp()));
         menu.Opening += (_, _) =>
@@ -133,6 +134,22 @@ internal sealed class SysPulseApp : ApplicationContext
         _main.Activate();
     }
 
+    /// <summary>Layout, size, opacity and position; turns the overlay on so changes are visible.</summary>
+    public void ShowOverlaySettings()
+    {
+        if (!OverlayEnabled)
+            SetOverlay(true);
+        if (_overlaySettings is { IsDisposed: false })
+        {
+            _overlaySettings.Activate();
+            return;
+        }
+        var owner = _main is { Visible: true } ? _main : null;
+        _overlaySettings = new OverlaySettingsForm(_overlay);
+        _overlaySettings.PlaceNear(owner);
+        _overlaySettings.Show(owner);
+    }
+
     public void SetOverlay(bool on)
     {
         AppSettings.Set("overlay", on);
@@ -174,6 +191,7 @@ internal sealed class SysPulseApp : ApplicationContext
             return;
         Exiting = true;
         _tray.Visible = false;
+        _overlaySettings?.Close();
         _main?.Close();
         _overlay.Close();
         _hotkey.Dispose();

@@ -12,7 +12,11 @@ similar to an in-game FPS counter.
 - **Overlay**: a white CPU / GPU / RAM / turbo readout in the top-right corner, always
   on top and click-through. Toggle it with **Ctrl+Shift+O**, the switch in the
   window, or the tray menu. Hold **Ctrl** over it to show a close button, or drag it
-  somewhere else. "Reset overlay position" in the tray menu puts it back.
+  somewhere else.
+- **Overlay settings** (gear next to the Overlay switch, or the tray menu): stacked or
+  one-line layout, small / medium / large, opacity 20–100%, optional dark backplate,
+  and position. Pick any corner or edge, then fine-tune with the arrow buttons (hold to
+  keep moving) or the arrow keys (1 px, Shift for 10 px). Changes apply live.
 - **CPU**: load (Task Manager's "% Processor Utility"), live clock speed against
   the base clock, and package temperature and power (see below).
 - **GPU**: load, temperature, VRAM, power and clock for NVIDIA GPUs (NVML, no admin
