@@ -32,11 +32,16 @@ internal sealed class SysPulseApp : ApplicationContext
 
         _overlayItem = new ToolStripMenuItem("Show overlay", null, (_, _) => SetOverlay(!OverlayEnabled)) { ShortcutKeyDisplayString = "Ctrl+Shift+O" };
         _turboItem = new ToolStripMenuItem("Turbo boost", null, (_, _) => SetTurbo(!(Last?.Snapshot.Turbo.Enabled ?? false)));
+        var turboLevel = new ToolStripMenuItem("Turbo level");
+        turboLevel.DropDown.Renderer = new DarkMenuRenderer();
+        turboLevel.DropDown.Font = Theme.Body;
+        turboLevel.DropDownItems.Add(new ToolStripMenuItem("…")); // filled when the menu opens
         var menu = new ContextMenuStrip { Renderer = new DarkMenuRenderer(), ShowImageMargin = true, Font = Theme.Body };
         menu.Items.Add(new ToolStripMenuItem("Open SysPulse", null, (_, _) => ShowMain()) { Font = Theme.BodyBold });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_overlayItem);
         menu.Items.Add(_turboItem);
+        menu.Items.Add(turboLevel);
         menu.Items.Add(new ToolStripMenuItem("Overlay settings…", null, (_, _) => ShowOverlaySettings()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => ExitApp()));
@@ -45,6 +50,9 @@ internal sealed class SysPulseApp : ApplicationContext
             _overlayItem.Checked = OverlayEnabled;
             _turboItem.Checked = Last?.Snapshot.Turbo.Enabled ?? false;
             _turboItem.Enabled = Last?.Snapshot.Turbo.Supported ?? false;
+            turboLevel.Enabled = _turboItem.Enabled;
+            turboLevel.DropDownItems.Clear();
+            UI.Controls.TurboCard.AddLevelItems(turboLevel.DropDownItems, Last?.Snapshot.Turbo.Current, mode => SetTurboLevel(mode));
         };
 
         _tray = new NotifyIcon
@@ -161,9 +169,13 @@ internal sealed class SysPulseApp : ApplicationContext
     }
 
     /// <summary>Returns null on success, or an error message.</summary>
-    public string? SetTurbo(bool on)
+    public string? SetTurbo(bool on) => ApplyTurbo(TurboControl.Set(on));
+
+    /// <summary>Sets the boost mode (0 is off). Returns null on success, or an error message.</summary>
+    public string? SetTurboLevel(uint mode) => ApplyTurbo(TurboControl.SetLevel(mode));
+
+    private string? ApplyTurbo(string? err)
     {
-        string? err = TurboControl.Set(on);
         Monitor.RefreshNow();
         if (err is not null)
             _tray.ShowBalloonTip(4000, "Turbo boost", err, ToolTipIcon.Warning);

@@ -57,6 +57,11 @@ internal sealed class MainForm : Form
 
         _cpu.TempLinkClicked += (_, _) => ShowCpuTempHelp();
         _turbo.ToggleClicked += (_, _) => ToggleTurbo();
+        _turbo.LevelChosen += (_, mode) =>
+        {
+            if (_app.SetTurboLevel(mode) is { } err)
+                Warn("Couldn't change the turbo level", err);
+        };
         _turbo.PowerModeChanged += (_, _) =>
         {
             if (!TurboControl.SetPowerMode(_turbo.SelectedPowerMode))

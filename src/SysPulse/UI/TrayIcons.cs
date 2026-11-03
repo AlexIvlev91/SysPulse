@@ -43,7 +43,9 @@ internal sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
 
     protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
     {
-        e.TextColor = e.Item.Enabled ? Theme.Text : Theme.TextSubtle;
+        // The right-hand column (shortcut, or a level's description) is muted.
+        bool secondary = e.Item is ToolStripMenuItem { ShortcutKeyDisplayString: { Length: > 0 } s } && e.Text == s;
+        e.TextColor = !e.Item.Enabled || secondary ? Theme.TextSubtle : Theme.Text;
         base.OnRenderItemText(e);
     }
 

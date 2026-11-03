@@ -158,4 +158,5 @@ internal static class Glyph
     public const string Overlay = "";
     public const string Pulse = "";
     public const string Settings = "";
+    public const string ChevronDown = "";
 }

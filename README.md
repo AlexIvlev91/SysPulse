@@ -49,8 +49,11 @@ Actions from the tagged source ([release.yml](.github/workflows/release.yml)).
 - **Turbo boost**: one button that does the same as
   `powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 0` (plus the DC
   value and `/setactive`). Turning it back on restores the previous boost mode
-  (Aggressive by default). Also available from the tray menu and the command line:
-  `SysPulse.exe --turbo off` / `--turbo on`.
+  (Aggressive by default). Click the level next to ON/OFF, or use **Turbo level** in
+  the tray menu, to pick any of the seven Windows boost modes: Off, Enabled, Aggressive,
+  Efficient enabled, Efficient aggressive, Aggressive at guaranteed, and Efficient
+  aggressive at guaranteed. Also available from the command line:
+  `SysPulse.exe --turbo off`, `--turbo on`, or a level number from `--turbo 0` to `--turbo 6`.
 - **Power mode**: the Windows 11 Efficiency / Balanced / Performance switch.
 - **Free up memory and CPU**: apps grouped by program (all `chrome.exe` processes
   together) and sorted by memory or CPU. Open apps are closed normally, so they can
@@ -105,7 +108,7 @@ git push origin v1.0.1
 
 For UI checks without touching the desktop, `SysPulse.exe --snapshot <folder>` samples
 the real sensors for a few seconds off-screen and saves `main.png`, `overlay.png`,
-`overlay-ctrl.png` and the readings to that folder.
+`overlay-ctrl.png`, `turbo-levels.png` and the readings to that folder.
 
 ## Files
 

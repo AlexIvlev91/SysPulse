@@ -14,10 +14,16 @@ internal static class Program
         if (snapshot >= 0)
             return SnapshotRunner.Run(snapshot + 1 < args.Length ? args[snapshot + 1] : ".");
 
-        // "SysPulse --turbo on|off": flip turbo from a shortcut or script without opening the app.
+        // "SysPulse --turbo on|off|0-6": set turbo from a shortcut or script without opening the app.
         int turbo = Array.IndexOf(args, "--turbo");
-        if (turbo >= 0 && turbo + 1 < args.Length && args[turbo + 1] is "on" or "off")
-            return Monitoring.TurboControl.Set(args[turbo + 1] == "on") is null ? 0 : 1;
+        if (turbo >= 0 && turbo + 1 < args.Length)
+        {
+            string value = args[turbo + 1];
+            if (value is "on" or "off")
+                return Monitoring.TurboControl.Set(value == "on") is null ? 0 : 1;
+            if (uint.TryParse(value, out uint mode) && mode <= Monitoring.TurboReading.MaxMode)
+                return Monitoring.TurboControl.SetLevel(mode) is null ? 0 : 1;
+        }
 
         if (!SingleInstance.TryAcquire(args.Contains("--restarted") ? 10_000 : 0))
         {

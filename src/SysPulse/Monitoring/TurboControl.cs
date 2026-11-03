@@ -44,7 +44,25 @@ internal static class TurboControl
             }
             ac = dc = 0;
         }
+        return Write(scheme, ac, dc);
+    }
 
+    /// <summary>
+    /// Applies one boost mode plugged in and on battery; 0 turns turbo off. The mode
+    /// is also what turning turbo back on restores. Returns null on success, or an error message.
+    /// </summary>
+    public static string? SetLevel(uint mode)
+    {
+        if (mode == 0)
+            return Set(false);
+        if (PowerApi.ActiveScheme() is not Guid scheme)
+            return "Couldn't read the active power plan.";
+        AppSettings.SetMany(("turbo.ac", mode.ToString()), ("turbo.dc", mode.ToString()));
+        return Write(scheme, mode, mode);
+    }
+
+    private static string? Write(Guid scheme, uint ac, uint dc)
+    {
         uint err = PowerApi.WriteValue(scheme, PowerApi.SubProcessor, PowerApi.PerfBoostMode, ac, dc);
         return err == 0 ? null : $"Windows refused the change (error {err}).";
     }

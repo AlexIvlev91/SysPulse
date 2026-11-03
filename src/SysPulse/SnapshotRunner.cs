@@ -36,6 +36,15 @@ internal static class SnapshotRunner
                     bmp.Save(Path.Combine(dir, "overlay-settings.png"), ImageFormat.Png);
                     settings.Close();
                 }
+                using (var levels = new ContextMenuStrip { Renderer = new UI.DarkMenuRenderer(), ShowImageMargin = true, Font = UI.Theme.Body })
+                {
+                    UI.Controls.TurboCard.AddLevelItems(levels.Items, app.Last?.Snapshot.Turbo.Current, _ => { });
+                    levels.Show(new Point(-20000, -20000));
+                    using var bmp = new Bitmap(levels.Width, levels.Height);
+                    levels.DrawToBitmap(bmp, new Rectangle(Point.Empty, levels.Size));
+                    bmp.Save(Path.Combine(dir, "turbo-levels.png"), ImageFormat.Png);
+                    levels.Close();
+                }
                 var o = app.Overlay.Options;
                 SaveOverlay(app, Path.Combine(dir, "overlay.png"), o, interactive: false);
                 SaveOverlay(app, Path.Combine(dir, "overlay-ctrl.png"), o, interactive: true);

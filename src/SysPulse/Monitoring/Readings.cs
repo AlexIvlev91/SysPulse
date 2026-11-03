@@ -57,6 +57,22 @@ internal sealed record TurboReading(bool Supported, uint Ac, uint Dc, bool OnBat
         6 => "Efficient aggressive at guaranteed",
         _ => $"Mode {mode}",
     };
+
+    /// <summary>Highest boost mode Windows defines; the level picker offers 0 to this.</summary>
+    public const uint MaxMode = 6;
+
+    /// <summary>What a boost mode does, for the level picker (from the PERFBOOSTMODE docs).</summary>
+    public static string ModeHint(uint mode) => mode switch
+    {
+        0 => "No boost, base clock only",
+        1 => "Boost when the CPU is busy",
+        2 => "Highest boost when busy (default)",
+        3 => "Boost only when it's efficient",
+        4 => "Highest boost when it's efficient",
+        5 => "Highest boost above the guaranteed clock",
+        6 => "Highest efficient boost above guaranteed",
+        _ => "",
+    };
 }
 
 internal sealed record Snapshot(

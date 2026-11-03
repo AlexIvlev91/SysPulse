@@ -8,8 +8,11 @@ internal sealed class TurboCard : Control
 {
     private readonly ModernButton _toggle = new("Turn turbo on", ButtonKind.Primary, Glyph.Rocket) { AutoSize = false, BaseHeight = 36 };
     private readonly Segmented _mode = new("Efficiency", "Balanced", "Performance");
+    private readonly ContextMenuStrip _levels = new() { Renderer = new DarkMenuRenderer(), ShowImageMargin = true, Font = Theme.Body };
     private TurboReading? _turbo;
     private CpuReading? _cpu;
+    private Rectangle _pill;
+    private bool _pillHover;
 
     public TurboCard()
     {
@@ -25,6 +28,23 @@ internal sealed class TurboCard : Control
 
     public event EventHandler? ToggleClicked;
     public event EventHandler? PowerModeChanged;
+    public event EventHandler<uint>? LevelChosen;
+
+    /// <summary>Fills a menu with the boost modes, the current one checked; picking one calls <paramref name="choose"/>.</summary>
+    public static void AddLevelItems(ToolStripItemCollection items, uint? current, Action<uint> choose)
+    {
+        for (uint m = 0; m <= TurboReading.MaxMode; m++)
+        {
+            uint mode = m;
+            items.Add(new ToolStripMenuItem(m == 0 ? "Off" : TurboReading.ModeName(m), null, (_, _) => choose(mode))
+            {
+                Checked = current == m,
+                ShortcutKeyDisplayString = TurboReading.ModeHint(m),
+            });
+            if (m == 0)
+                items.Add(new ToolStripSeparator());
+        }
+    }
 
     public PowerMode SelectedPowerMode => (PowerMode)_mode.SelectedIndex;
 
@@ -47,6 +67,39 @@ internal sealed class TurboCard : Control
         if (mode is PowerMode m)
             _mode.SelectedIndex = (int)m;
         Invalidate();
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        bool over = _turbo is { Supported: true } && _pill.Contains(e.Location);
+        if (over != _pillHover)
+        {
+            _pillHover = over;
+            Cursor = over ? Cursors.Hand : Cursors.Default;
+            Invalidate(_pill);
+        }
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (_pillHover)
+        {
+            _pillHover = false;
+            Cursor = Cursors.Default;
+            Invalidate(_pill);
+        }
+    }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        if (_turbo is not { Supported: true } turbo || !_pill.Contains(e.Location))
+            return;
+        _levels.Items.Clear();
+        AddLevelItems(_levels.Items, turbo.Current, mode => LevelChosen?.Invoke(this, mode));
+        _levels.Show(this, new Point(_pill.Left, _pill.Bottom + Theme.S(4)));
     }
 
     protected override void OnLayout(LayoutEventArgs levent)
@@ -80,21 +133,25 @@ internal sealed class TurboCard : Control
         if (_turbo is null)
             return;
 
-        // Hero: ON / OFF with a pill showing the active boost mode.
+        // Hero: ON / OFF with a pill showing the active boost mode; clicking the pill picks the level.
         string state = !_turbo.Supported ? "N/A" : _turbo.Enabled ? "ON" : "OFF";
         int sw = Theme.TextWidth(state, Theme.Hero);
         Theme.DrawText(g, state, Theme.Hero, Theme.Text, new Rectangle(x - Theme.S(2), y, sw + 4, Theme.S(40)));
+        _pill = Rectangle.Empty;
         if (_turbo.Supported)
         {
             string pill = TurboReading.ModeName(_turbo.Current);
-            int pw = Theme.TextWidth(pill, Theme.SmallBold) + Theme.S(18);
-            var pr = new Rectangle(x + sw + Theme.S(12), y + Theme.S(11), pw, Theme.S(22));
+            int px = x + sw + Theme.S(12), chevron = Theme.S(16);
+            int pw = Math.Min(Theme.TextWidth(pill, Theme.SmallBold) + Theme.S(18) + chevron, x + w - px);
+            var pr = _pill = new Rectangle(px, y + Theme.S(11), pw, Theme.S(22));
             using var pillPath = Theme.RoundedRect(pr, Theme.S(11));
-            using var pillBrush = new SolidBrush(_turbo.Enabled ? Theme.AccentSoft : Theme.SurfaceAlt);
+            using var pillBrush = new SolidBrush(_pillHover ? Theme.Hover : _turbo.Enabled ? Theme.AccentSoft : Theme.SurfaceAlt);
             using var pillPen = new Pen(_turbo.Enabled ? Theme.Accent : Theme.BorderStrong);
             g.FillPath(pillBrush, pillPath);
             g.DrawPath(pillPen, pillPath);
-            Theme.DrawText(g, pill, Theme.SmallBold, Theme.Text, pr, Theme.LeftLine | TextFormatFlags.HorizontalCenter);
+            var textBounds = new Rectangle(pr.X + Theme.S(9), pr.Y, pr.Width - Theme.S(9) - chevron - Theme.S(4), pr.Height);
+            Theme.DrawText(g, pill, Theme.SmallBold, Theme.Text, textBounds);
+            Theme.DrawGlyph(g, Glyph.ChevronDown, 7f, Theme.TextMuted, new Rectangle(pr.Right - chevron - Theme.S(6), pr.Y, chevron, pr.Height));
         }
         y += Theme.S(40);
 
